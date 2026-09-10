@@ -1,0 +1,37 @@
+name: unpack-v1.2
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  unpack:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild v1.2 source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, pathlib
+          raw = pathlib.Path('v1.2-package.zip.b64').read_text().strip()
+          pathlib.Path('/tmp/aios.zip').write_bytes(base64.b64decode(raw, validate=True))
+          PY
+          rm -rf /tmp/aios-src
+          mkdir -p /tmp/aios-src
+          unzip -q /tmp/aios.zip -d /tmp/aios-src
+          src=$(find /tmp/aios-src -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          find . -maxdepth 1 -mindepth 1 ! -name '.git' ! -name '.github' ! -name 'v1.2-package.zip.b64' -exec rm -rf {} +
+          cp -a "$src"/. .
+          rm -rf .pytest_cache
+          rm -f v1.2-package.zip.b64
+          rm -f .github/workflows/unpack-v1.2.yml
+      - name: Commit reconstructed project
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Release AI Company OS v1.2 complete' || exit 0
+          git push origin HEAD:main

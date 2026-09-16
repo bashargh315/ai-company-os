@@ -1,0 +1,11 @@
+{
+  "name":"AI Company OS Manager",
+  "short_name":"AI OS",
+  "start_url":"../admin/index.html",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#0f172a",
+  "lang":"ar",
+  "dir":"rtl",
+  "icons":[]
+}

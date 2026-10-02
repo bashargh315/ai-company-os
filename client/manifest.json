@@ -1,0 +1,10 @@
+{
+  "name":"AI Company OS",
+  "short_name":"AI Company OS",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#101828",
+  "dir":"rtl",
+  "lang":"ar"
+}

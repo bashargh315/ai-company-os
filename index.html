@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="../shared/manifest.json">
+<title>AI Company OS — الإدارة</title><link rel="stylesheet" href="../shared/app.css">
+</head>
+<body>
+<header class="topbar"><div class="brand"><span class="brand-mark">AI</span><div><strong>AI Company OS</strong><small>Owner Control Center</small></div></div><div class="manager-actions"><span class="pill">OWNER</span><span class="pill" id="version">v1.3.1</span><button class="ghost" id="refresh">تحديث</button></div></header>
+<div class="admin-layout"><aside class="sidebar"><a class="active">نظرة عامة</a><a>العملاء</a><a>العمليات</a><a>الوكلاء</a><a>الأفكار والفرص</a><a>الإيرادات</a><a>المدفوعات والبنك</a><a>الأمان والسجلات</a></aside>
+<main class="admin-main"><section class="admin-hero"><div><span class="eyebrow">مركز المدير</span><h1>الشركة تعمل. أنت ترى الصورة كاملة.</h1><p>هذه الواجهة تقرأ بيانات النظام الفعلية بدلاً من أرقام تجريبية.</p></div><div class="health"><span></span><b id="healthText">جاري الفحص</b><small id="healthSub">...</small></div></section>
+<section class="stats"><article><small>العملاء</small><strong id="customers">0</strong><span>حسابات فعلية في قاعدة البيانات</span></article><article><small>الشركات</small><strong id="companies">0</strong><span>مساحات عمل</span></article><article><small>المهام</small><strong id="tasks">0</strong><span>طلبات وصلت إلى الـOrchestrator</span></article><article><small>موافقات معلقة</small><strong id="approvals">0</strong><span>أفعال تحتاج قرار المالك</span></article></section>
+<section class="grid-2"><div class="card"><div class="section-head"><div><h2>يحتاج موافقتك</h2><p>الأفعال الحساسة لا تنفذ تلقائياً.</p></div></div><div id="approvalList"><div class="empty">لا توجد موافقات معلقة حالياً.</div></div></div>
+<div class="card"><div class="section-head"><div><h2>نشاط الوكلاء</h2><p>آخر العمليات التي سجلها النظام.</p></div></div><div class="activity" id="activityList"><div class="empty">لا يوجد نشاط بعد.</div></div></div></section>
+<section class="card"><div class="section-head"><div><h2>العملاء والشركات</h2><p>بيانات العمل الفعلية من قاعدة البيانات.</p></div></div><div class="table"><div class="tr th"><span>الشركة</span><span>البريد</span><span>اللغة</span><span>الإنشاء</span></div><div id="customerTable"></div></div></section>
+<section class="card"><div class="section-head"><div><span class="eyebrow">المدفوعات</span><h2>طلبات الدفع</h2><p>راجع الطلبات التي أنشأها العملاء، ثم أكّد الدفع بعد تحققك منه.</p></div></div><div id="paymentList" class="ideas"><div class="empty">جاري تحميل طلبات الدفع...</div></div></section>
+<section class="card payout"><div><span class="eyebrow">الإعداد المالي</span><h2>المدفوعات والحساب البنكي</h2><p>سنربط مزود الدفع المناسب قانونياً عند اختيار الدولة والمزود. لا يوجد تجاوز لمتطلبات KYC أو التحقق.</p></div><button class="primary" id="bankBtn">إعداد المدفوعات</button></section>
+</main></div>
+<script>
+const API='';const headers={'Content-Type':'application/json','X-Demo-User':'demo-user'};
+async function api(p,o={}){const r=await fetch(API+p,{...o,headers:{...headers,...(o.headers||{})}});if(!r.ok)throw new Error(await r.text());return r.json();}
+function esc(s){return String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+async function load(){
+ try{const h=await api('/api/health');document.querySelector('#healthText').textContent='النظام مستقر';document.querySelector('#healthSub').textContent='API '+h.version;
+ const d=await api('/api/admin/overview');
+ document.querySelector('#customers').textContent=d.customers;document.querySelector('#companies').textContent=d.companies;document.querySelector('#tasks').textContent=d.tasks;document.querySelector('#approvals').textContent=d.pending_approvals;
+ document.querySelector('#approvalList').innerHTML=d.approvals.length?d.approvals.map(a=>`<div class="approval"><div><b>${esc(a.title)}</b><p>${esc(a.description)}</p></div><button class="primary" onclick="decide('${a.id}','approved')">موافقة</button><button class="ghost" onclick="decide('${a.id}','rejected')">رفض</button></div>`).join(''):'<div class="empty">لا توجد موافقات معلقة حالياً.</div>';
+ document.querySelector('#activityList').innerHTML=d.recent_activity.length?d.recent_activity.map(a=>`<div><b>${esc(a.agent)}</b><span>${esc(a.event)}</span><time>${new Date(a.created_at).toLocaleString('ar')}</time></div>`).join(''):'<div class="empty">لا يوجد نشاط بعد.</div>';
+ document.querySelector('#customerTable').innerHTML=d.customers_list.length?d.customers_list.map(c=>`<div class="tr"><span>${esc(c.name)}</span><span>${esc(c.email)}</span><span>${esc(c.language)}</span><span>${new Date(c.created_at).toLocaleDateString('ar')}</span></div>`).join(''):'<div class="empty">لا يوجد عملاء بعد.</div>';
+  await loadPayments();
+ }catch(e){document.querySelector('#healthText').textContent='تعذر الاتصال';document.querySelector('#healthSub').textContent='شغّل الـAPI ثم حدّث الصفحة';}
+}
+async function decide(id,status){await api('/api/admin/approvals/'+id,{method:'POST',body:JSON.stringify({status})});load();}
+
+async function loadPayments(){
+ const box=document.querySelector('#paymentList'); if(!box)return;
+ try{
+  const rows=await api('/api/admin/payments');
+  if(!rows.length){box.innerHTML='<div class="empty">لا توجد طلبات دفع بعد.</div>';return;}
+  box.innerHTML=rows.map(p=>{
+    const status=p.status==='paid'?'مؤكد':(p.status==='pending'?'بانتظار التأكيد':p.status);
+    const action=p.status==='pending'?`<button class="primary" onclick="confirmPayment('${p.id}')">تأكيد الدفع</button>`:'';
+    return `<article class="idea"><span>${esc(status)}</span><div><b>${esc(p.plan)} — $${esc(p.amount_usd)}</b><p>الطلب: ${esc(p.id)}<br>الشركة: ${esc(p.company_id)}<br>التاريخ: ${new Date(p.created_at).toLocaleString('ar')}</p>${action}</div></article>`;
+  }).join('');
+ }catch{box.innerHTML='<div class="empty">تعذر تحميل المدفوعات.</div>';}
+}
+async function confirmPayment(id){
+ const external_id=prompt('رقم العملية أو المرجع (اختياري):','') || '';
+ if(!confirm('بعد التحقق من التحويل، هل تؤكد أن الدفعة وصلت؟'))return;
+ try{await api('/api/billing/confirm',{method:'POST',body:JSON.stringify({payment_id:id,external_id})}); alert('تم تأكيد الدفع وتفعيل الاشتراك.'); await load();}
+ catch(e){alert('تعذر تأكيد الدفع.');}
+}
+
+document.querySelector('#refresh').onclick=load;document.querySelector('#bankBtn').onclick=()=>alert('وحدة الدفع أصبحت مجهزة مكانياً. الربط الفعلي سيُضاف بعد تحديد الدولة ومزود الدفع المناسب.');load();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
+</body></html>

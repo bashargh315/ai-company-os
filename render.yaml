@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ai-company-os-v1
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT --proxy-headers
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: AI_PROVIDER
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: SEARCH_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: AIOS_DB_PATH
+        sync: false
+      - key: AIOS_CHECKOUT_URL_STARTER
+        sync: false
+      - key: AIOS_CHECKOUT_URL_GROWTH
+        sync: false
+      - key: AIOS_CHECKOUT_URL_PRO
+        sync: false

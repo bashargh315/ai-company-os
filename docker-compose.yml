@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      AIOS_DB_PATH: /data/ai_company_os.db
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+    volumes:
+      - aios_data:/data
+volumes:
+  aios_data:
